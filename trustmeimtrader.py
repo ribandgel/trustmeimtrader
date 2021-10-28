@@ -1,6 +1,8 @@
 import time
 import numpy
 
+max_cost = 500
+
 stock_for_brute_force = [
     {"name": "action_1", "cost": 20, "stonks": 5},
     {"name": "action_2", "cost": 30, "stonks": 10},
@@ -25,9 +27,49 @@ stock_for_brute_force = [
 ]
 
 def brute_force():
+    for auction in stock_for_brute_force:
+        auction["value"] = ((auction["stonks"] / 100 + 1) * auction["cost"]) - auction["cost"]
+    print(stock_for_brute_force)
+    mapping = {}
+    max_value = 0
+    number_of_possibles = 2**len(stock_for_brute_force)
+    for i in range(0, number_of_possibles):
+        way = str(bin(i))[2::]
+        auctions = []
+        weight = 0
+        value = 0
+        index = len(way) - 1
+        for boolean in range(0, len(way)):
+            take = int(way[boolean])
+            if take:
+                auction = stock_for_brute_force[index]
+                auctions.append(auction["name"])
+                value += auction["value"]
+                weight += auction["cost"]
+            index -= 1
+        if weight <= max_cost:
+            try:
+                mapping[value].append({
+                    "weight": weight,
+                    "auctions": auctions,
+                })
+            except KeyError:
+                mapping[value] = [
+                    {
+                        "weight": weight,
+                        "auctions": auctions,
+                    }
+                ]
+
+            if max_value < value:
+                max_value = value
+    mapping[max_value].sort(key=lambda x: x["weight"], reverse=True)
+    print(f"The best is {mapping[max_value][0]} for a benefit of {max_value} and a cost of {mapping[max_value][0]['weight']}")
+    return mapping[max_value][0]
+
+def smart_way():
     print("sum", sum(stock["stonks"] for stock in stock_for_brute_force))
     # Calculate each possibility and keep the best one.
-    max_cost = 500
     OPT = numpy.zeros(shape=(len(stock_for_brute_force)+1, sum(stock["stonks"] for stock in stock_for_brute_force)))
     ACTIONS = numpy.zeros(shape=(len(stock_for_brute_force)+1, sum(stock["stonks"] for stock in stock_for_brute_force)),dtype=object)
 
@@ -68,9 +110,6 @@ def brute_force():
     print("Cost:", OPT[len(stock_for_brute_force)][solution])
     print(actions)
     return solution
-
-def smart_way():
-    return None
 
 if __name__ == "__main__":
     print("Brute force")
